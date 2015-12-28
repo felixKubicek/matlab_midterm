@@ -5,14 +5,21 @@ global GREEN = [102 204 0]/255;
 
 global FEATURE = 'F';
 global CONJUNCTION = 'C';
+global SEARCH_TYPES = [FEATURE, CONJUNCTION]
+global SET_SIZES = [1, 5, 15, 31];
+global TRAILS_PER_SEARCH = 2;
+
 
 global FS = 36;
-global SET_SIZES = [1, 5, 15, 31];
+
 
 
 function main()
   global FEATURE;
   global CONJUNCTION;
+  global TRAILS_PER_SEARCH;
+  global SEARCH_TYPES;
+  global SET_SIZES; 
   global RED;
   global GREEN;
 
@@ -27,9 +34,29 @@ function main()
   distractors.(CONJUNCTION) = [green_x, red_o];
   targets.(CONJUNCTION) = [red_x, green_o];
 
-  init_display();
-  display_prolog(CONJUNCTION, targets);
-  [correct, reaction_time] = display_search(15, 1, CONJUNCTION, distractors, targets)
+  search_results = [];
+  for searchTypeIdx = 1:length(SEARCH_TYPES)
+    for setSizeIdx = 1:length(SET_SIZES)
+      search_results = [search_results struct('search_type', SEARCH_TYPES(searchTypeIdx),
+                                              'set_size', SET_SIZES(setSizeIdx),
+                                              'results', [])];
+    end
+  end
+
+  % init_display();
+
+  searches = search_results(cellfun(@length, {search_results.results}) < TRAILS_PER_SEARCH);
+
+  % pick random search (defined by search type and set size and target present)
+  search = searches(1 + round(rand(1)*(length(searches)-1)));
+
+
+
+
+
+  
+  % display_prolog(CONJUNCTION, targets);
+  % [correct, reaction_time] = display_search(15, 1, CONJUNCTION, distractors, targets)
 
 end
 
