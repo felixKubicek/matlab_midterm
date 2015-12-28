@@ -27,21 +27,47 @@ function main()
   distractors.(CONJUNCTION) = [green_x, red_o];
   targets.(CONJUNCTION) = [red_x, green_o];
 
-  setup_display();
-  feature_search(15, 1, CONJUNCTION, distractors, targets)
+  init_display();
+  display_prolog(CONJUNCTION, targets);
+  [correct, reaction_time] = display_search(15, 1, CONJUNCTION, distractors, targets)
+
 end
 
-function setup_display()
+
+function init_display()
   global FS;
+
   siz = get(0, 'ScreenSize'); 
   fig = figure('Position', siz);
-  cla;
   axis ([ -0.1 1.1 -0.1 1.1])
   set(gca, 'FontName', 'Consolas', 'XTickLabel', '', 'YTickLabel', '', 'XTick', [], 
       'YTick', [], 'Box', 'off', 'XColor', [1 1 1], 'YColor', [1 1 1], 'FontSize', FS);
 end
 
-function feature_search(setSize, targetPresent, searchType, distractors, targets)
+
+function display_prolog(searchType, targets)
+  global FS;
+
+  help_text = sprintf(strcat('Press any button to continue to search.\n',
+                             'Then press "j" for target present.\n',
+                             'Or press "k" for targent not present.'));
+
+  text(0, 0.75, help_text, 'FontSize', 20);
+
+  text(0, 0.56, 'Targets:', 'FontSize', 20);
+  for i = 1:length(targets.(searchType))
+    text((i-1)*0.03, 0.5, targets.(searchType)(i).chr, 'Color',
+         targets.(searchType)(i).color, 'FontSize', FS);
+  end
+
+  FlushEvents('keyDown');
+  GetChar();
+  
+  cla;
+end
+
+
+function [correct, reaction_time] = display_search(setSize, targetPresent, searchType, distractors, targets)
   global FS;
 
   half = (setSize -1)/2;
@@ -66,7 +92,15 @@ function feature_search(setSize, targetPresent, searchType, distractors, targets
              'Color', distractors.(searchType)(whichDistractor).color, 'FontSize', FS);
   end
 
+  FlushEvents('keyDown');
+
+  tic
+  pressed_key = GetChar();
+  reaction_time = toc;
+  correct = ((pressed_key == 'j' && targetPresent) || (pressed_key == 'k' && ~targetPresent));
+
 end
+ 
 
 % program entry point
 main()
