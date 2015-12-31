@@ -7,8 +7,7 @@ global FEATURE = 'F';
 global CONJUNCTION = 'C';
 global SEARCH_TYPES = [FEATURE, CONJUNCTION]
 global SET_SIZES = [1, 5, 15, 31];
-global TRAILS_PER_SEARCH = 1;
-
+global TRAILS_PER_SEARCH = 2;
 
 global FS = 36;
 
@@ -47,14 +46,33 @@ function main()
 
   init_display();
 
-  searches = search_results(cellfun(@length, {search_results.results}) < TRAILS_PER_SEARCH);
+  while true
+  
+    remaining_searches = (search_results(cellfun(@length, {search_results.results}) < TRAILS_PER_SEARCH))
 
-  % pick random search (defined by search type and set size and target present)
-  search = searches(1 + round(rand(1)*(length(searches)-1)));
+    if ~isempty(remaining_searches)
 
-  display_prolog(search.search_type, targets);
-  [correct, reaction_time] = display_search(search.set_size, search.target_present, 
-                                            search.search_type, distractors, targets)
+      % pick random search (defined by search type and set size and target present)
+      current_search = remaining_searches(1 + round(rand(1)*(length(remaining_searches)-1)));
+
+      display_prolog(current_search.search_type, targets);
+      [correct, reaction_time] = display_search(current_search.set_size, current_search.target_present, 
+                                                current_search.search_type, distractors, targets);
+      if correct
+        % save reaction time as result in corresponding search
+        result_index = find(arrayfun(@(s) isequal(s, current_search), search_results));
+        search_results(result_index).results(end + 1) = reaction_time;
+
+        search_results(result_index)
+
+      else
+        disp('false');
+      end
+  
+    else
+      break;
+    end
+  end
 
 end
 
@@ -73,6 +91,7 @@ end
 function display_prolog(searchType, targets)
   global FS;
 
+  cla;
   help_text = sprintf(strcat('Press any button to continue to search.\n',
                              'Then press "j" for target present.\n',
                              'Or press "k" for targent not present.'));
@@ -88,12 +107,13 @@ function display_prolog(searchType, targets)
   FlushEvents('keyDown');
   GetChar();
   
-  cla;
 end
 
 
 function [correct, reaction_time] = display_search(setSize, targetPresent, searchType, distractors, targets)
   global FS;
+
+  cla;
 
   half = (setSize -1)/2;
   distractorIdentity = [zeros(half, 1); ones(half, 1)] + 1;
