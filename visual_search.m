@@ -5,7 +5,7 @@ global GREEN = [102 204 0]/255;
 
 global FEATURE = 'F';
 global CONJUNCTION = 'C';
-global SEARCH_TYPES = [FEATURE, CONJUNCTION]
+global SEARCH_TYPES = [FEATURE, CONJUNCTION];
 global SET_SIZES = [1, 5, 15, 31];
 global TRAILS_PER_SEARCH = 2;
 
@@ -46,6 +46,7 @@ function main()
 
   init_display();
 
+  wrong_answers = 0;
   while true
   
     remaining_searches = (search_results(cellfun(@length, {search_results.results}) < TRAILS_PER_SEARCH))
@@ -62,17 +63,18 @@ function main()
         % save reaction time as result in corresponding search
         result_index = find(arrayfun(@(s) isequal(s, current_search), search_results));
         search_results(result_index).results(end + 1) = reaction_time;
-
-        search_results(result_index)
-
+        
+        % search_results(result_index)
       else
-        disp('false');
+        wrong_answers++;
       end
   
     else
       break;
     end
   end
+
+  display_results(search_results, wrong_answers);
 
 end
 
@@ -82,7 +84,7 @@ function init_display()
 
   siz = get(0, 'ScreenSize'); 
   fig = figure('Position', siz);
-  axis ([ -0.1 1.1 -0.1 1.1])
+  axis ([-0.1 1.1 -0.1 1.1])
   set(gca, 'FontName', 'Consolas', 'XTickLabel', '', 'YTickLabel', '', 'XTick', [], 
       'YTick', [], 'Box', 'off', 'XColor', [1 1 1], 'YColor', [1 1 1], 'FontSize', FS);
 end
@@ -145,7 +147,46 @@ function [correct, reaction_time] = display_search(setSize, targetPresent, searc
   correct = ((pressed_key == 'j' && targetPresent) || (pressed_key == 'k' && ~targetPresent));
 
 end
- 
+
+
+function display_results(search_results, wrong_answers)
+  global FS;
+  global SET_SIZES;
+  global FEATURE;
+  global CONJUNCTION;
+
+  cla;
+  
+  filter_results = @(search_results, search_type, target_present) search_results(
+                        find(arrayfun(@(s) s.search_type == search_type && s.target_present == target_present, search_results)));
+
+  get_results = @(search_results, search_type, target_present) cellfun(@mean, 
+                  {filter_results(search_results, search_type, target_present).results});
+
+  feature_present_avg_times = get_results(search_results, FEATURE, true);
+  feature_absent_avg_times = get_results(search_results, FEATURE, false);
+
+  ax1 = subplot(2,1,1);
+
+  plot(ax1, SET_SIZES, feature_present_avg_times, SET_SIZES, feature_absent_avg_times);
+  legend(ax1, 'feature, present', 'feature, absent', 'Location','northwest');
+
+  conjunction_present_avg_times = get_results(search_results, CONJUNCTION, true);
+  conjunction_absent_avg_times = get_results(search_results, CONJUNCTION, false);
+
+  ax2 = subplot(2,1,2);
+
+  plot(ax2,  SET_SIZES, conjunction_present_avg_times, SET_SIZES, conjunction_absent_avg_times);
+  legend(ax2, 'conjunction, present', 'conjunction, absent', 'Location','northwest');
+
+  axis(ax1, [0 32 0 15]);
+  axis(ax2, [0 32 0 15]);
+
+  results_heading = sprintf('Search Results. Number of wrong answers: %d.', wrong_answers);
+  title(ax1, results_heading, 'FontSize', FS);
+
+end
+
 
 % program entry point
 main()
